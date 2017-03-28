@@ -24,10 +24,11 @@ class Container {
    * @param {Scalar|Function} value
    * @param {Array} dependencies
    * @param {String} tag
+   * @param {Boolean} shared
    */
-  register(name, value, dependencies = [], tag = null) {
+  register(name, value, dependencies = [], tag = null, shared = true) {
     if (Container.isConstructor(value)) {
-      this.registerDefinition(name, value, dependencies, tag);
+      this.registerDefinition(name, value, dependencies, tag, shared);
     } else {
       this.registerParameter(name, value);
     }
@@ -40,8 +41,9 @@ class Container {
    * @param {Function} classname
    * @param {Array} dependencies
    * @param {String} tag
+   * @param {Boolean} shared
    */
-  registerDefinition(name, classname, dependencies = [], tag = null) {
+  registerDefinition(name, classname, dependencies = [], tag = null, shared = true) {
     this.ensureUniqueness(name);
     this.services.set(name, { classname, name, dependencies, tag });
   }
@@ -82,10 +84,6 @@ class Container {
    * @return {mixed}
    */
   fetch(name) {
-    if (this.cache.has(name)) {
-      return this.cache.get(name);
-    }
-
     if (this.services.has(name)) {
       return this.resolve(this.services.get(name));
     }
@@ -119,11 +117,19 @@ class Container {
    * @return {mixed}
    */
   resolve(definition) {
+    const shared = definition.shared;
+
+    if (shared && this.cache.has(name)) {
+        return this.cache.get(name);
+    }
+
     const dependencies = definition.dependencies.map(this.fetch);
     const Constructor = definition.classname;
     const service = new Constructor(...dependencies);
 
-    this.cache.set(definition.name, service);
+    if (shared) {
+        this.cache.set(definition.name, service);
+    }
 
     return service;
   }

@@ -50,7 +50,7 @@ class Container {
    * Register parameter
    *
    * @param {String} name
-   * @param {mixed} value
+   * @param {Scalar} value
    */
   registerParameter(name, value) {
     this.ensureUniqueness(name);
